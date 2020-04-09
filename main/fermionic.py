@@ -1,11 +1,10 @@
 #fermionic.py
 
+import time
 import numpy as np
 from scipy import sparse
-import time
 
-
-start_time = time.time()
+#start_time = time.time()
 
 def splitter(x):
     '''This function creates an numpy array where each 
@@ -75,16 +74,35 @@ def operators(n):
     cd_tot = sparse.csr_matrix.transpose(cm_tot)              
     return cm_tot, cd_tot, l
 
+'''
+----------------Operators----------------------
+
+I can write this part in a different file.
+When importing an external module, jupyter requests a
+different addres than regular python interpreters
+
+If you would like to use this in a separate file:
+for running this script in jupyter, use main.fermionic
+for runnin this script in regular python, use fermionic
+
+from main.fermionic import *
+
+'''
+
+
+
+start_time = time.time()
 
 n = int(input('Choose the dimension of the system: '))
 
 cm_tot, cd_tot, l = operators(n)
+print("--- %s seconds ---" % (time.time() - start_time))
 
 def cm(i, cm_tot = cm_tot, l = l):
     '''cm(i) cuts the big cm_tot sparse matrix to the
-    corresponding mode i
-    '''
-    
+     corresponding mode i
+     '''   
+     
     return cm_tot[:,l*i:l*(i+1)]
 
 def cd(i, cd_tot = cd_tot, l = l):
@@ -114,69 +132,39 @@ def cdcd(i,j):
     cdj = cd(j)
     return cdi.dot(cdj)
 
+'''
+----------------Class state----------------------
+I can write this part in a different file.
+When importing an external module, jupyter requests a
+different addres than regular python interpreters
 
+If you would like to use this in a separate file:
+for running this script in jupyter, use main.fermionic
+for runnin this script in regular python, use fermionic
 
-print("--- %s seconds ---" % (time.time() - start_time))
+from main.operators import *
+'''
 
-#def duplicates(lst, item):
-#    '''This function is used in c, for finding repeated indexes'''
-#    return [i for i, x in enumerate(lst) if x == item]
+class State(object):
+    def __init__(self, state):
+        self.state = state
+        n = int(np.log2(len(self.state)))
+        self.dimension = n
 
-
-# def operators(n):
-#     '''operators generates all the destruction and creation 
-#     operators in dimension n. It also generates the two order
-#     operators.
-#     Ideally, this function would return sparse matrices, but in 
-#     python I could not find a way of generating a list of sparse
-#     matrices. In mathematica this can be easily done
-#     '''
+    def rhosp(self):
+        n = self.dimension
+        state = self.state
+        rhosp = np.zeros((n,n))
+        for i in range(n):
+            for j in range(n):
+                rhosp[i,j] = state.dot(cdcm(j,i).dot(state))
+        return rhosp
     
-#     basis, vacio = integer_digits(n)
-#     l = len(vacio)  
-#     cm = []
-#     cd = []
-
-     
-#     for i in range(n):
-#         row = []
-#         col = []
-#         data = []
-#         for j in range(l):
-#             if c(i, basis, j) != 0:
-#                 col.append(j)
-#                 row.append(c(i, basis, j)[0]-1)
-#                 data.append(c(i, basis, j)[1])               
-#         cmi = sparse.csr_matrix((data, (row, col)), shape=(l, l))
-#         cdi = sparse.csr_matrix.transpose(cmi)
-#         cm.append(cmi.toarray())
-#         cd.append(cdi.toarray())
+    def eigen(self):
+        eigen = np.linalg.eigvalsh(self.rhosp())
+        return eigen
     
-    
-#     return cm, cd
-
-# def two_body_op(n, cm_tot = cm_tot, cd_tot = cd_tot):
-#     '''This function defines the two body operators
-#     '''
-#     basis, vacio = integer_digits(n)
-#     l = len(vacio)  
-#     cdcm = np.zeros((n,n,l,l))
-#     cmcd = np.zeros((n,n,l,l))
-#     cmcm = np.zeros((n,n,l,l))
-#     cdcd = np.zeros((n,n,l,l))
-#     for i in range(n):
-#         for j in range(n):
-#             cdcm[i,j] = cd_tot[i].dot(cm_tot[j])
-#             cmcd[i,j] = cm_tot[i].dot(cd_tot[j])        
-#             cdcd[i,j] = cd_tot[i].dot(cd_tot[j])
-#             cmcm[i,j] = cm_tot[i].dot(cm_tot[j])
-#     return cdcm, cmcd, cdcd, cmcm
-
-# from sympy.physics.quantum import AntiCommutator, Commutator
-# from sympy.physics.quantum.fermion import FermionOp
-# from sympy.physics.quantum import Operator
-
-# def com(A,B):
-#     A = Operator('A')
-#     B = Operator('B')
-#     return Commutator(A,B).expand(commutator=True)
+    def ssp(self):
+        s = -1*np.sum(self.eigen()*np.log(self.eigen()))
+        return s
+            
