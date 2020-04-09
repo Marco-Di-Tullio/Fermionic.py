@@ -152,6 +152,9 @@ class State(object):
         self.dimension = n
 
     def rhosp(self):
+        '''rhosp is the one body density matrix
+        '''
+        
         n = self.dimension
         state = self.state
         rhosp = np.zeros((n,n))
@@ -161,10 +164,14 @@ class State(object):
         return rhosp
     
     def eigen(self):
+        '''eigen are the eigenvalues of the one body density matrix
+        '''
         eigen = np.linalg.eigvalsh(self.rhosp())
         return eigen
     
     def ssp(self):
-        s = -1*np.sum(self.eigen()*np.log(self.eigen()))
+        '''ssp is the one body entropy
+        '''
+        s = -1*np.sum(self.eigen()*np.log(self.eigen())+(1-self.eigen())*np.log(1-self.eigen()))
         return s
             
