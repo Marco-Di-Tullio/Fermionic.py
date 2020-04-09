@@ -1,8 +1,8 @@
 # Fermionic operators
 
 This programs numerically defines fermionic operators through a sparse matrix representation.
-The original intention is to estimate fermionic operators in a given state, but it can serve for a variety of problems.
-The only input the program needs is the dimension, and the corresponding one and two body fermionic operators will be automatically defined. 
+The class State() gives access to several properties of a given state, such as the one body matrix and the one body entropy.
+The only input the program needs is the dimension, and the corresponding one body fermionic operators will be automatically defined. The you can define states in the base of posible states of the specified dimension, and calculate some of its properties.
 
 
 ![](/images/quantuminfo.png)
