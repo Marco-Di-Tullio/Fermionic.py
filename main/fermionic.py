@@ -1,6 +1,9 @@
+#fermionic.py
+
 import numpy as np
 from scipy import sparse
 import time
+
 
 start_time = time.time()
 
@@ -110,7 +113,9 @@ def cdcd(i,j):
     cdi = cd(i)
     cdj = cd(j)
     return cdi.dot(cdj)
-    
+
+
+
 print("--- %s seconds ---" % (time.time() - start_time))
 
 #def duplicates(lst, item):
@@ -166,3 +171,12 @@ print("--- %s seconds ---" % (time.time() - start_time))
 #             cdcd[i,j] = cd_tot[i].dot(cd_tot[j])
 #             cmcm[i,j] = cm_tot[i].dot(cm_tot[j])
 #     return cdcm, cmcd, cdcd, cmcm
+
+# from sympy.physics.quantum import AntiCommutator, Commutator
+# from sympy.physics.quantum.fermion import FermionOp
+# from sympy.physics.quantum import Operator
+
+# def com(A,B):
+#     A = Operator('A')
+#     B = Operator('B')
+#     return Commutator(A,B).expand(commutator=True)
