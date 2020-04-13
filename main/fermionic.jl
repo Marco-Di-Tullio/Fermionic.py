@@ -9,8 +9,6 @@ function operators(n)
     col = []
     data = []
     for i in 1:lb
-        cop = deepcopy(basis)
-        cop[rowb[i],colb[i]] = 0
         j = rowb[i]-2^(n-colb[i])
         sign = (-1)^(sum(basis[rowb[i],1:colb[i]])+1)
         append!(row, j)

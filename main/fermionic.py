@@ -3,7 +3,6 @@
 import time
 import numpy as np
 from scipy import sparse
-import copy
 
 #start_time = time.time()
 
@@ -51,10 +50,8 @@ def operators(n):
     col = []
     data = []
     for i in range(lb):
-        cop = copy.deepcopy(sparsebasis)
-        cop[rowb[i], colb[i]] = 0
         j = rowb[i]-2**(n-1-colb[i])
-        sign = (-1)**(cop[rowb[i]][0:colb[i]].sum())
+        sign = (-1)**(sparsebasis[rowb[i],0:colb[i]].sum())
         row.append(j)
         col.append(rowb[i]+colb[i]*l)
         data.append(sign)
