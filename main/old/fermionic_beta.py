@@ -22,42 +22,40 @@ def integer_digits(n):
     '''integer_digits(n) creates a fermionic basis for dimension n
     '''
 
-    rowb = []
-    colb = []
-    data = []
-    vacio = [0 for i in range(2**n)]
-    vacio[1] = 1
+    assert n > 0, 'n must be greater than 0'
+    basis = np.array([0 for i in range(n)])
     for i in range(1,2**n):
         binary_base = format(i, 'b')
         bin_vector = splitter(binary_base)
         while len(bin_vector) < n:
             bin_vector = np.insert(bin_vector,0,0)
-        for j in range(n):
-            if bin_vector[j] == 1:
-                rowb.append(i+1)
-                colb.append(j)
-                data.append(1)
-    basis = sparse.csr_matrix((data, (rowb, colb)))
-    return rowb, colb, basis, vacio
+        basis = np.vstack((basis,bin_vector))
+        vacio = np.zeros(len(basis))
+        vacio[0] = 1
+    basis = basis.tolist()
+    return basis, vacio
+
 
 def operators(n):
     '''operators generates all the destruction and creation
     operators in dimension n stacked in a sparse matrix
     '''
 
-    rowb, colb, basis, vacio = integer_digits(n)
+    basis, vacio = integer_digits(n)   
     l = 2**n
+    sparsebasis = sparse.csr_matrix(basis)
+    rowb, colb = sparsebasis.nonzero()
     lb = len(rowb)
     row = []
     col = []
     data = []
     for i in range(lb):
         j = rowb[i]-2**(n-1-colb[i])
-        sign = (-1)**(basis[rowb[i],0:colb[i]].sum())
-        row.append(j-1)
-        col.append(rowb[i]-1+colb[i]*l)
+        sign = (-1)**(sparsebasis[rowb[i],0:colb[i]].sum())
+        row.append(j)
+        col.append(rowb[i]+colb[i]*l)
         data.append(sign)
-    cm_tot = sparse.csr_matrix((data, (row, col)),shape=(l, n*l))
+    cm_tot = sparse.csr_matrix((data, (row, col)), shape=(l, n*l))
     cd_tot = sparse.csr_matrix.transpose(cm_tot)
     return cm_tot, cd_tot, l
 
