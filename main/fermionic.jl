@@ -2,26 +2,20 @@
 using SparseArrays
 
 function operators(n)
-    basis, vacio = integer_digits(n)
-    l = length(basis)
+    rowb, colb, basis, vacio = integer_digits(n)
+    l = 2^n
+    lb = n*2^(n-1)
     row = []
     col = []
     data = []
-    for k in 1:n
-        for i in 1:l
-            cop = deepcopy(basis)
-            if cop[i][k] != 0
-                for j in 1:l
-                    cop[i][k] = 0
-                    if basis[j] == cop[i]
-                        sign = (-1)^(sum(basis[i][1:k])+1)
-                        append!(row, j)
-                        append!(col, i+(k-1)*l)
-                        append!(data, sign)
-                    end
-                end
-            end
-        end
+    for i in 1:lb
+        cop = deepcopy(basis)
+        cop[rowb[i],colb[i]] = 0
+        j = rowb[i]-2^(n-colb[i])
+        sign = (-1)^(sum(basis[rowb[i],1:colb[i]])+1)
+        append!(row, j)
+        append!(col, rowb[i]+(colb[i]-1)*l)
+        append!(data, sign)
     end
     append!(row, l)
     append!(col, 1)
@@ -32,14 +26,23 @@ function operators(n)
 end
 
 function integer_digits(n)
-    basis = []
+    rowb = []
+    colb = []
+    data = []
     for i in 0:(2^n-1)
         binary_base = bitstring(i)[65-n:64]
         bin_vector = splitter(binary_base)
-        append!(basis, [bin_vector])
+        for j in 1:n
+            if bin_vector[j] == 1
+                append!(colb,j)
+                append!(data,1)
+                append!(rowb,i+1)
+            end
+        end
     end
-    vacio = [0 for i in 1:length(basis)]
-    return basis, vacio
+    basis = sparse(rowb, colb, data)
+    vacio = [0 for i in 1:2^n]
+    return rowb, colb, basis, vacio
 end
 
 
@@ -56,8 +59,9 @@ end
 ------------------- Operators -------------------------
 =#
 
-@time begin
+
 n = parse(Int,input("Choose the dimension of the system: "))
+@time begin
 cm_tot, cd_tot, l = operators(n)
 end
 
@@ -65,6 +69,7 @@ end
 function cm(i, cm_tot = cm_tot, l = l)
     return cm_tot[1:l,((i-1)*l+1):i*l]
 end
+
 
 function cdm(i, cd_tot = cd_tot, l = l)
      #name cd is already taken

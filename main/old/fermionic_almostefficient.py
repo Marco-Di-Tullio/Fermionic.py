@@ -3,7 +3,6 @@
 import time
 import numpy as np
 from scipy import sparse
-import copy
 
 #start_time = time.time()
 
@@ -33,7 +32,6 @@ def integer_digits(n):
         basis = np.vstack((basis,bin_vector))
         vacio = np.zeros(len(basis))
         vacio[0] = 1
-    basis = basis.tolist()
     return basis, vacio
 
 
@@ -44,21 +42,20 @@ def operators(n):
 
     basis, vacio = integer_digits(n)   
     l = len(vacio)
-    sparsebasis = sparse.csr_matrix(basis)
-    rowb, colb = sparsebasis.nonzero()
-    lb = len(rowb)
     row = []
     col = []
     data = []
-    for i in range(lb):
-        cop = copy.deepcopy(sparsebasis)
-        for j in range(l):
-            cop[rowb[i], colb[i]] = 0
-            if (sparsebasis[j] != cop[rowb[i]]).nnz == 0:                 
-                sign = (-1)**(cop[rowb[i]][0:colb[i]].sum())
-                row.append(j)
-                col.append(rowb[i]+colb[i]*l)
-                data.append(sign)
+    for k in range(n):
+        cop = basis.tolist()
+        for i in range(l):         
+            if cop[i][k] != 0:
+                for j in range(l):                                      
+                    cop[i][k] = 0                
+                    if np.all(basis[j] == cop[i]):
+                        sign = (-1)**(sum(cop[i][0:k]))
+                        row.append(j)
+                        col.append(i+k*l)
+                        data.append(sign)
     cm_tot = sparse.csr_matrix((data, (row, col)), shape=(l, n*l))
     cd_tot = sparse.csr_matrix.transpose(cm_tot)
     return cm_tot, cd_tot, l
@@ -79,11 +76,9 @@ from main.fermionic import *
 '''
 
 
-
-start_time = time.time()
-
 n = int(input('Choose the dimension of the system: '))
 
+start_time = time.time()
 cm_tot, cd_tot, l = operators(n)
 print("--- %s seconds ---" % (time.time() - start_time))
 
