@@ -58,13 +58,6 @@ def operators(n):
         row.append(j)
         col.append(rowb[i]+colb[i]*l)
         data.append(sign)
-        #for j in range(l):
-        #    cop[rowb[i], colb[i]] = 0
-        #    if (sparsebasis[j] != cop[rowb[i]]).nnz == 0:                 
-        #        sign = (-1)**(cop[rowb[i]][0:colb[i]].sum())
-        #        row.append(j)
-        #        col.append(rowb[i]+colb[i]*l)
-        #        data.append(sign)
     cm_tot = sparse.csr_matrix((data, (row, col)), shape=(l, n*l))
     cd_tot = sparse.csr_matrix.transpose(cm_tot)
     return cm_tot, cd_tot, l
