@@ -1,4 +1,6 @@
 #fermionic.jl
+
+module Fermionic_module
 using SparseArrays
 
 function operators(n)
@@ -53,41 +55,4 @@ function splitter(x)
     return vectorized
 end
 
-#=
-------------------- Operators -------------------------
-=#
-
-n = parse(Int,input("Choose the dimension of the system: "))
-@time begin
-cm_tot, cd_tot, l = operators(n)
-end
-
-#Important to do is to remove the explicit dependency
-# with the input and use kwargs argument, or
-#something like that
-
-function cm(i, cm_tot = cm_tot, l = l)
-    return cm_tot[1:l,((i-1)*l+1):i*l]
-end
-
-
-function cdm(i, cd_tot = cd_tot, l = l)
-     #name cd is already taken
-    return cd_tot[((i-1)*l+1):i*l,1:l]
-end
-
-function cdcm(i,j)
-    return cdm(i)*cm(j)
-end
-
-function cmcd(i,j)
-    return cm(i)*cdm(j)
-end
-
-function cmcm(i,j)
-    return cm(i)*cm(j)
-end
-
-function cdcd(i,j)
-    return cdm(i)*cdm(j)
 end
