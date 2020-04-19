@@ -107,77 +107,57 @@ cdcd(o::Op, i::Int, j::Int) = cdm(o,i)*cdm(o,j)
 ------------------- States -------------------------
 =#
 
-#I think I will define 2 structures: one for
-#normal arrays and one for sparse Sparsevectors
-#maybe that can be done with a single struct
+#I am using the multi dispatch structure, so states can be
+#defines both as vectors or as sparse vectors
 
-#----------------- vectors-----------------
-struct Statev
-    stv::Array{Int64,1}
-    opev::Op
+struct State
+    st::Array{Int64,1}
+    ope::Op
 end
 
-stv(s::Statev) = s.stv
-opev(o::Statev) = o.opev
+struct State_sparse
+    st::SparseVector{Float64,Int64}
+    ope::Op
+end
 
-function rhospv(st::Statev)
-    n = dim(opev(st))
+st(s::State) = s.st
+st(s::State_sparse) = s.st
+
+ope(s::State) = s.ope
+ope(s::State_sparse) = s.ope
+
+function rhospv(sta::State)
+    n = dim(ope(sta))
     rhospv = zeros(n,n)
     for i in 1:n
         for j in 1:n
-            rhospv[i,j] = stv(st)'*cdcm(opev(st), i, j)*stv(st)
+            rhospv[i,j] = st(sta)'*cdcm(ope(sta), i, j)*st(sta)
         end
     end
     return rhospv
 end
 
-function eigenspv(st::Statev)
-    rhosp = rhospv(st)
-    return eigvals(rhosp)
-end
-
-function sspv(st::Statev)
-    eigen = eigenspv(st)
-    lene = length(eigen)
-    s = 0
-    for i in 1:lene
-        if eigen[i] != 0 && eigen[i] != 1
-            s = s - (eigen[i]*log(eigen[i]) + (1 - eigen[i])*log(1-eigen[i]))
-        end
-    end
-    return s
-end
-
-#----------------- sparse-----------------
-struct States
-    sts::SparseVector{Float64,Int64}
-    opes::Op
-end
-
-sts(s::States) = s.sts
-opes(o::States) = o.opes
-
-function rhosps(st::States)
-    n = dim(opes(st))
+function rhosps(sta::State_sparse)
+    n = dim(ope(sta))
     rhosps = spzeros(n,n)
     for i in 1:n
         for j in 1:n
-            rhosps[i,j] = sts(st)'*cdcm(opes(st), i, j)*sts(st)
+            rhosps[i,j] = st(sta)'*cdcm(ope(sta), i, j)*st(sta)
         end
     end
     return rhosps
 end
 
-function eigensps(st::States)
-    #For some reason, eigvals is not working
-    #for sparse matrices, so I must convert
-    #back to dense
-    rhosp = Matrix(rhosps(st))
-    return eigvals(rhosp)
-end
+rhosp(s::State) = rhospv(s)
+rhosp(s::State_sparse) = rhosps(s)
 
-function ssps(st::States)
-    eigen = eigensps(st)
+eigensp(s::State) = eigvals(rhosp(s))
+#For some reason, I can not compute eigenvalues
+#directly from sparse matrices
+eigensp(s::State_sparse) = eigvals(Matrix(rhosp(s)))
+
+function ssp(sta::State)
+    eigen = eigensp(sta)
     lene = length(eigen)
     s = 0
     for i in 1:lene
@@ -188,6 +168,14 @@ function ssps(st::States)
     return s
 end
 
-#todo:
-#ver si puedo unificar las clases y que se de cuenta solo
-# si es array o sparse
+function ssp(sta::State_sparse)
+    eigen = eigensp(sta)
+    lene = length(eigen)
+    s = 0
+    for i in 1:lene
+        if eigen[i] != 0 && eigen[i] != 1
+            s = s - (eigen[i]*log(eigen[i]) + (1 - eigen[i])*log(1-eigen[i]))
+        end
+    end
+    return s
+end
