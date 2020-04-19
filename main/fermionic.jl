@@ -1,5 +1,6 @@
 #fermionic.jl
 using SparseArrays
+using LinearAlgebra
 
 function operators(n)
     rowb, colb, base, vacio = integer_digits(n)
@@ -93,7 +94,7 @@ basis(o::Op) = o.basis
 #corresponding to the destruction of the
 #first fermionic mode
 cm(o::Op, i::Int) = cmtot(o)[1:le(o),((i-1)*le(o)+1):i*le(o)]
-cdm(o::Op, i::Int) = cdtot(o)[((i-1)*l(o)+1):i*le(o),1:le(o)]
+cdm(o::Op, i::Int) = cdtot(o)[((i-1)*le(o)+1):i*le(o),1:le(o)]
 cdcm(o::Op, i::Int, j::Int) = cdm(o,i)*cm(o,j)
 cmcd(o::Op, i::Int, j::Int) = cm(o,i)*cdm(o,j)
 cmcm(o::Op, i::Int, j::Int) = cm(o,i)*cm(o,j)
@@ -105,3 +106,88 @@ cdcd(o::Op, i::Int, j::Int) = cdm(o,i)*cdm(o,j)
 #=
 ------------------- States -------------------------
 =#
+
+#I think I will define 2 structures: one for
+#normal arrays and one for sparse Sparsevectors
+#maybe that can be done with a single struct
+
+#----------------- vectors-----------------
+struct Statev
+    stv::Array{Int64,1}
+    opev::Op
+end
+
+stv(s::Statev) = s.stv
+opev(o::Statev) = o.opev
+
+function rhospv(st::Statev)
+    n = dim(opev(st))
+    rhospv = zeros(n,n)
+    for i in 1:n
+        for j in 1:n
+            rhospv[i,j] = stv(st)'*cdcm(opev(st), i, j)*stv(st)
+        end
+    end
+    return rhospv
+end
+
+function eigenspv(st::Statev)
+    rhosp = rhospv(st)
+    return eigvals(rhosp)
+end
+
+function sspv(st::Statev)
+    eigen = eigenspv(st)
+    lene = length(eigen)
+    s = 0
+    for i in 1:lene
+        if eigen[i] != 0 && eigen[i] != 1
+            s = s - (eigen[i]*log(eigen[i]) + (1 - eigen[i])*log(1-eigen[i]))
+        end
+    end
+    return s
+end
+
+#----------------- sparse-----------------
+struct States
+    sts::SparseVector{Float64,Int64}
+    opes::Op
+end
+
+sts(s::States) = s.sts
+opes(o::States) = o.opes
+
+function rhosps(st::States)
+    n = dim(opes(st))
+    rhosps = spzeros(n,n)
+    for i in 1:n
+        for j in 1:n
+            rhosps[i,j] = sts(st)'*cdcm(opes(st), i, j)*sts(st)
+        end
+    end
+    return rhosps
+end
+
+function eigensps(st::States)
+    #For some reason, eigvals is not working
+    #for sparse matrices, so I must convert
+    #back to dense
+    rhosp = Matrix(rhosps(st))
+    return eigvals(rhosp)
+end
+
+function ssps(st::States)
+    eigen = eigensps(st)
+    lene = length(eigen)
+    s = 0
+    for i in 1:lene
+        if eigen[i] != 0 && eigen[i] != 1
+            s = s - (eigen[i]*log(eigen[i]) + (1 - eigen[i])*log(1-eigen[i]))
+        end
+    end
+    return s
+end
+
+#todo:
+#ver si puedo unificar las clases y que se de cuenta solo
+# si es array o sparse
