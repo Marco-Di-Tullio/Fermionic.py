@@ -2,45 +2,54 @@
 using SparseArrays
 
 function operators(n)
-    rowb, colb, basis, vacio = integer_digits(n)
+    rowb, colb, base, vacio = integer_digits(n)
     l = 2^n
     lb = n*2^(n-1)
-    row = []
-    col = []
-    data = []
+    row = spzeros(lb+1)
+    col = spzeros(lb+1)
+    data = spzeros(lb+1)
+    row[lb+1] = l
+    col[lb+1] = 1
+    data[lb+1] = 0
     for i in 1:lb
-        j = rowb[i]-2^(n-colb[i])
-        sign = (-1)^(sum(basis[rowb[i],1:colb[i]])+1)
-        append!(row, j)
-        append!(col, rowb[i]+(colb[i]-1)*l)
-        append!(data, sign)
+        j = floor(Int, rowb[i])-2^(n-floor(Int, colb[i]))
+        sign = (-1)^(sum(base[floor(Int, rowb[i]),1:floor(Int, colb[i])])+1)
+        row[i] = j
+        col[i] = floor(Int, rowb[i])+(floor(Int, colb[i])-1)*l
+        data[i] = sign
     end
-    append!(row, l)
-    append!(col, 1)
-    append!(data, 0)
     cm_tot = sparse(row, col, data)
     cd_tot = sparse(cm_tot')
-    return cm_tot, cd_tot, l
+    return cm_tot, cd_tot, l, base
 end
 
 function integer_digits(n)
-    rowb = []
-    colb = []
-    data = []
+    #rowb = []
+    #colb = []
+    #data = []
+    rowb = spzeros(n*2^(n-1))
+    colb = spzeros(n*2^(n-1))
+    data = spzeros(n*2^(n-1))
+    counter = 1
     for i in 0:(2^n-1)
         binary_base = bitstring(i)[65-n:64]
         bin_vector = splitter(binary_base)
         for j in 1:n
             if bin_vector[j] == 1
-                append!(colb,j)
-                append!(data,1)
-                append!(rowb,i+1)
+                rowb[counter] = (i+1)::Int
+                colb[counter] = j::Int
+                data[counter] = 1
+                counter = counter + 1
+                #append!(colb,j)
+                #append!(data,1)
+                #append!(rowb,i+1)
             end
         end
     end
-    basis = sparse(rowb, colb, data)
-    vacio = [0 for i in 1:2^n]
-    return rowb, colb, basis, vacio
+    base = sparse(rowb, colb, data)
+    vacio = spzeros(2^n)
+    vacio[1] = 1
+    return rowb, colb, base, vacio
 end
 
 
@@ -57,37 +66,42 @@ end
 ------------------- Operators -------------------------
 =#
 
-n = parse(Int,input("Choose the dimension of the system: "))
-@time begin
-cm_tot, cd_tot, l = operators(n)
+
+#in order to define an operator of dim 4
+#you must write op4 = Op(4)
+
+struct Op
+    dim::Int
+    cmtot::SparseMatrixCSC{Float64,Int64}
+    cdtot::SparseMatrixCSC{Float64,Int64}
+    le::Int
+    basis::SparseMatrixCSC{Float64,Int64}
+    Op(dim) = new(dim, operators(dim)...)
 end
 
-#Important to do is to remove the explicit dependency
-# with the input and use kwargs argument, or
-#something like that
+#after being defined, one can
+#retrieve the dimension by typping
+# dim(op4)
+dim(o::Op) = o.dim
+cmtot(o::Op) = o.cmtot
+cdtot(o::Op) = o.cdtot
+le(o::Op) = o.le
+basis(o::Op) = o.basis
 
-function cm(i, cm_tot = cm_tot, l = l)
-    return cm_tot[1:l,((i-1)*l+1):i*l]
-end
+#These are the fermionic operators we wanted
+#By calling cm(op, 1) we get the sparse matrix
+#corresponding to the destruction of the
+#first fermionic mode
+cm(o::Op, i::Int) = cmtot(o)[1:le(o),((i-1)*le(o)+1):i*le(o)]
+cdm(o::Op, i::Int) = cdtot(o)[((i-1)*l(o)+1):i*le(o),1:le(o)]
+cdcm(o::Op, i::Int, j::Int) = cdm(o,i)*cm(o,j)
+cmcd(o::Op, i::Int, j::Int) = cm(o,i)*cdm(o,j)
+cmcm(o::Op, i::Int, j::Int) = cm(o,i)*cm(o,j)
+cdcd(o::Op, i::Int, j::Int) = cdm(o,i)*cdm(o,j)
 
+#you can visualize the complete matrix instead of the sparse
+#by writing Matrix(cm(op,n))
 
-function cdm(i, cd_tot = cd_tot, l = l)
-     #name cd is already taken
-    return cd_tot[((i-1)*l+1):i*l,1:l]
-end
-
-function cdcm(i,j)
-    return cdm(i)*cm(j)
-end
-
-function cmcd(i,j)
-    return cm(i)*cdm(j)
-end
-
-function cmcm(i,j)
-    return cm(i)*cm(j)
-end
-
-function cdcd(i,j)
-    return cdm(i)*cdm(j)
-end
+#=
+------------------- States -------------------------
+=#
