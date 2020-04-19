@@ -25,9 +25,6 @@ function operators(n)
 end
 
 function integer_digits(n)
-    #rowb = []
-    #colb = []
-    #data = []
     rowb = spzeros(n*2^(n-1))
     colb = spzeros(n*2^(n-1))
     data = spzeros(n*2^(n-1))
@@ -41,9 +38,6 @@ function integer_digits(n)
                 colb[counter] = j::Int
                 data[counter] = 1
                 counter = counter + 1
-                #append!(colb,j)
-                #append!(data,1)
-                #append!(rowb,i+1)
             end
         end
     end
@@ -176,3 +170,16 @@ function ssp(sta::State_sparse)
     end
     return s
 end
+
+#=
+Programación
+1. Hacerlo modulo
+2. Estructurar bien carpetas, agregar loggers
+
+Fisica
+1. Diagonalizador de Hamiltonianos
+2. Matrices de m cuerpos
+
+n-1. Definir operaciones de computacion cuantica
+n. Definir conmutadores
+=#
