@@ -126,7 +126,7 @@ st(s::State_sparse) = s.st
 ope(s::State) = s.ope
 ope(s::State_sparse) = s.ope
 
-function rhospv(sta::State)
+function rhosp(sta::State)
     n = dim(ope(sta))
     rhospv = zeros(n,n)
     for i in 1:n
@@ -137,7 +137,7 @@ function rhospv(sta::State)
     return rhospv
 end
 
-function rhosps(sta::State_sparse)
+function rhosp(sta::State_sparse)
     n = dim(ope(sta))
     rhosps = spzeros(n,n)
     for i in 1:n
@@ -147,9 +147,6 @@ function rhosps(sta::State_sparse)
     end
     return rhosps
 end
-
-rhosp(s::State) = rhospv(s)
-rhosp(s::State_sparse) = rhosps(s)
 
 eigensp(s::State) = eigvals(rhosp(s))
 #For some reason, I can not compute eigenvalues
